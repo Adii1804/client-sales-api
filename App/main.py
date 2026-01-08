@@ -64,21 +64,23 @@ def get_sales_receipt_wise(
             b.PAYMENTAMOUNT,
 
             (
-                SELECT
-                    s.Itemid,
-                    s.price,
-                    s.quantity,
-                    s.discount
-                FROM dbo.vw_LastYearSales s
+                SELECT JSON_ARRAYAGG(
+                    JSON_OBJECT(
+                        'Itemid', s.Itemid,
+                        'price', s.price,
+                        'quantity', s.quantity,
+                        'discount', s.discount
+                    )
+                )
+                FROM vw_LastYearSales s
                 WHERE s.RECEIPTID = b.RECEIPTID
                   AND s.TRANSDATE >= :from_date
-                  AND s.TRANSDATE < DATEADD(day, 1, :to_date)
-                FOR JSON PATH
+                  AND s.TRANSDATE < DATE_ADD(:to_date, INTERVAL 1 DAY)
             ) AS ITEMS
 
-        FROM dbo.vw_LastYearSales b
+        FROM vw_LastYearSales b
         WHERE b.TRANSDATE >= :from_date
-          AND b.TRANSDATE < DATEADD(day, 1, :to_date)
+          AND b.TRANSDATE < DATE_ADD(:to_date, INTERVAL 1 DAY)
         GROUP BY
             b.RECEIPTID,
             b.CUSTMOBILENO,
