@@ -7,7 +7,9 @@ port = os.getenv("PORT", "8000")
 bind = f"0.0.0.0:{port}"
 
 # Worker configuration
-workers = multiprocessing.cpu_count() * 2 + 1
+# Using 1 worker to fix token sharing issue with in-memory ACTIVE_TOKENS
+# For production, consider using Redis for token storage
+workers = 1
 worker_class = "uvicorn.workers.UvicornWorker"
 timeout = 120
 keepalive = 5
