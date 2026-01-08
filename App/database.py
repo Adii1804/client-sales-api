@@ -11,7 +11,8 @@ DB_NAME = os.getenv("DB_NAME")
 DATABASE_URL = (
     f"mssql+pyodbc://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     "?driver=ODBC+Driver+18+for+SQL+Server"
-    "&Encrypt=no"
+    "&Encrypt=yes"
+    "&TrustServerCertificate=no"
 )
 
 engine = create_engine(
