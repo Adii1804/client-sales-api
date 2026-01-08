@@ -1,5 +1,6 @@
-fastapi
-uvicorn
-sqlalchemy
-pyodbc
-python-multipart
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+gunicorn==21.2.0
+sqlalchemy==2.0.25
+pyodbc==5.0.1
+python-multipart==0.0.6

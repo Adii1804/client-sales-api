@@ -12,7 +12,7 @@ DATABASE_URL = (
     f"mssql+pyodbc://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     "?driver=ODBC+Driver+18+for+SQL+Server"
     "&Encrypt=yes"
-    "&TrustServerCertificate=no"
+    "&TrustServerCertificate=yes"
 )
 
 engine = create_engine(
