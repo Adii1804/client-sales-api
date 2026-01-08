@@ -40,6 +40,32 @@ def logout(token: str = Depends(oauth2_scheme)):
     ACTIVE_TOKENS.discard(token)
     return {"message": "Logged out successfully"}
 
+@app.get("/health/db", dependencies=[Depends(verify_token)])
+def check_database_connection():
+    """
+    Test database connectivity for debugging
+    """
+    import os
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT 1 as test")).fetchone()
+            return {
+                "status": "connected",
+                "test_query": "SUCCESS",
+                "db_host": os.getenv("DB_HOST"),
+                "db_port": os.getenv("DB_PORT"),
+                "db_name": os.getenv("DB_NAME")
+            }
+    except Exception as e:
+        return {
+            "status": "failed",
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "db_host": os.getenv("DB_HOST"),
+            "db_port": os.getenv("DB_PORT"),
+            "db_name": os.getenv("DB_NAME")
+        }
+
 @app.get("/sales/receipt-wise", dependencies=[Depends(verify_token)])
 def get_sales_receipt_wise(
     from_date: date = Query(..., description="YYYY-MM-DD"),
@@ -64,23 +90,21 @@ def get_sales_receipt_wise(
             b.PAYMENTAMOUNT,
 
             (
-                SELECT JSON_ARRAYAGG(
-                    JSON_OBJECT(
-                        'Itemid', s.Itemid,
-                        'price', s.price,
-                        'quantity', s.quantity,
-                        'discount', s.discount
-                    )
-                )
-                FROM vw_LastYearSales s
+                SELECT
+                    s.Itemid,
+                    s.price,
+                    s.quantity,
+                    s.discount
+                FROM dbo.vw_LastYearSales s
                 WHERE s.RECEIPTID = b.RECEIPTID
                   AND s.TRANSDATE >= :from_date
-                  AND s.TRANSDATE < DATE_ADD(:to_date, INTERVAL 1 DAY)
+                  AND s.TRANSDATE < DATEADD(day, 1, :to_date)
+                FOR JSON PATH
             ) AS ITEMS
 
-        FROM vw_LastYearSales b
+        FROM dbo.vw_LastYearSales b
         WHERE b.TRANSDATE >= :from_date
-          AND b.TRANSDATE < DATE_ADD(:to_date, INTERVAL 1 DAY)
+          AND b.TRANSDATE < DATEADD(day, 1, :to_date)
         GROUP BY
             b.RECEIPTID,
             b.CUSTMOBILENO,
